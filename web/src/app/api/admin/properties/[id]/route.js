@@ -1,7 +1,18 @@
 import sql from "@/app/api/utils/sql";
+import { auth } from "@/auth";
 
-// Admin PUT - update any property without owner check
+async function requireAdmin(session) {
+  if (!session?.user?.id) return false;
+  const rows = await sql`SELECT role FROM profiles WHERE id = ${session.user.id} LIMIT 1`;
+  return rows?.[0]?.role === "admin";
+}
+
 export async function PUT(request, { params }) {
+  const session = await auth();
+  if (!(await requireAdmin(session))) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { id } = params;
   try {
     const body = await request.json();
@@ -58,8 +69,12 @@ export async function PUT(request, { params }) {
   }
 }
 
-// Admin DELETE - delete any property without owner check
 export async function DELETE(request, { params }) {
+  const session = await auth();
+  if (!(await requireAdmin(session))) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { id } = params;
   try {
     const result = await sql`

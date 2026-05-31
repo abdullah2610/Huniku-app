@@ -8,18 +8,28 @@ export async function POST(request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { booking_id, amount, payment_method } = await request.json();
+    const { booking_id, payment_method } = await request.json();
 
-    // Create payment record
+    // Verify booking belongs to this user and get authoritative price
+    const bookings = await sql`
+      SELECT b.*, p.price as property_price
+      FROM bookings b
+      JOIN properties p ON b.property_id = p.id
+      WHERE b.id = ${booking_id} AND b.seeker_id = ${session.user.id}
+      LIMIT 1
+    `;
+    if (bookings.length === 0) {
+      return Response.json({ error: "Booking tidak ditemukan" }, { status: 404 });
+    }
+    const booking = bookings[0];
+    // Use server-side price, never trust client-supplied amount
+    const amount = booking.property_price;
+
+    // Create payment record as pending — mark paid only after gateway webhook
     const result = await sql`
       INSERT INTO payments (booking_id, amount, status, payment_method)
-      VALUES (${booking_id}, ${amount}, 'paid', ${payment_method})
+      VALUES (${booking_id}, ${amount}, 'pending', ${payment_method})
       RETURNING *
-    `;
-
-    // Update booking status
-    await sql`
-      UPDATE bookings SET status = 'confirmed' WHERE id = ${booking_id}
     `;
 
     return Response.json(result[0]);

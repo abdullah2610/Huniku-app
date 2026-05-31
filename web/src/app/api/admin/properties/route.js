@@ -1,8 +1,19 @@
 import sql from "@/app/api/utils/sql";
+import { auth } from "@/auth";
 
-// GET all properties (admin, no auth required for demo)
+async function requireAdmin(session) {
+  if (!session?.user?.id) return false;
+  const rows = await sql`SELECT role FROM profiles WHERE id = ${session.user.id} LIMIT 1`;
+  return rows?.[0]?.role === "admin";
+}
+
 export async function GET() {
   try {
+    const session = await auth();
+    if (!(await requireAdmin(session))) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const rows = await sql`
       SELECT p.*, pr.full_name as owner_name
       FROM properties p

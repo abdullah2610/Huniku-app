@@ -11,14 +11,24 @@ export async function POST(request) {
     const { role, name } = await request.json();
     const userId = session.user.id;
 
+    // Only allow self-assignable roles — admin must be set server-side
+    const ALLOWED_ROLES = ['seeker', 'owner'];
+    if (!ALLOWED_ROLES.includes(role)) {
+      return Response.json({ error: "Role tidak valid" }, { status: 400 });
+    }
+
     // Check if profile exists, if not create it
     const existing =
-      await sql`SELECT id FROM profiles WHERE id = ${userId} LIMIT 1`;
+      await sql`SELECT id, role FROM profiles WHERE id = ${userId} LIMIT 1`;
 
     if (existing.length > 0) {
+      // Prevent downgrading from admin via this endpoint
+      if (existing[0].role === 'admin') {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
       await sql`
-        UPDATE profiles 
-        SET role = ${role}, full_name = ${name} 
+        UPDATE profiles
+        SET role = ${role}, full_name = ${name}
         WHERE id = ${userId}
       `;
     } else {

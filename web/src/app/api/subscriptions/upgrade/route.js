@@ -29,36 +29,30 @@ export async function POST(request) {
       ) RETURNING *
     `;
 
-    // For demo purposes, auto-approve free tier or if payment proof uploaded
-    if (plan_id === "free" || payment_proof_url) {
-      const expiresAt =
-        plan_id === "free"
-          ? null
-          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
+    // Free tier activates immediately; paid plans require admin verification
+    if (plan_id === "free") {
       await sql`
-        UPDATE profiles 
-        SET subscription_tier = ${plan_id},
-            subscription_expires_at = ${expiresAt}
+        UPDATE profiles
+        SET subscription_tier = 'free',
+            subscription_expires_at = NULL
         WHERE id = ${session.user.id}
       `;
-
       await sql`
-        UPDATE subscription_transactions 
-        SET status = 'completed', completed_at = CURRENT_TIMESTAMP 
+        UPDATE subscription_transactions
+        SET status = 'completed', completed_at = CURRENT_TIMESTAMP
         WHERE id = ${transaction[0].id}
       `;
-
       return Response.json({
         success: true,
-        message: "Subscription berhasil diaktifkan!",
+        message: "Paket free berhasil diaktifkan!",
         transaction: transaction[0],
       });
     }
 
+    // Paid plans stay 'pending' until admin verifies payment proof
     return Response.json({
       success: true,
-      message: "Menunggu verifikasi pembayaran",
+      message: "Menunggu verifikasi pembayaran oleh admin",
       transaction: transaction[0],
     });
   } catch (err) {
