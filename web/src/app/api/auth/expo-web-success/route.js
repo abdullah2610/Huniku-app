@@ -4,12 +4,15 @@ import { getToken } from '@auth/core/jwt';
 const ALLOWED_ORIGIN = process.env.AUTH_URL || process.env.EXPO_PUBLIC_APP_URL || '';
 
 // Escape JSON for safe embedding inside a <script> tag
+// Uses split/join to avoid regex with literal Unicode line terminators
 function safeJsonScript(obj) {
+	const LS = String.fromCharCode(0x2028);
+	const PS = String.fromCharCode(0x2029);
 	return JSON.stringify(obj)
-		.replace(/</g, '\\u003c')
-		.replace(/>/g, '\\u003e')
-		.replace(/ /g, '\\u2028')
-		.replace(/ /g, '\\u2029');
+		.split('<').join('\\u003c')
+		.split('>').join('\\u003e')
+		.split(LS).join('\\u2028')
+		.split(PS).join('\\u2029');
 }
 
 export async function GET(request) {
