@@ -19,6 +19,16 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  ssr: {
+    // Force-bundle CJS packages that don't expose proper ESM named exports
+    noExternal: [
+      'react-idle-timer',
+      'react-markdown',
+      'remark-gfm',
+      'papaparse',
+      'html-to-image',
+    ],
+  },
   optimizeDeps: {
     // Explicitly include fast-glob, since it gets dynamically imported and we
     // don't want that to cause a re-bundle.
