@@ -128,7 +128,7 @@ export default function HomePage() {
       <section className="relative h-[550px] md:h-[650px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10" />
         <img
-          src="https://images.unsplash.com/photo-1600585154340-be6199f74039?auto=format&fit=crop&q=80&w=2000"
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=2000"
           className="absolute inset-0 w-full h-full object-cover"
           alt="Modern House"
           loading="eager"
