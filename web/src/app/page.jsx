@@ -29,9 +29,9 @@ const PROPERTY_TYPES = [
 export default function HomePage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [locationParts, setLocationParts] = useState([]);
+  const [locationParts, setLocationParts] = useState(["Indonesia"]);
   const [locationIndex, setLocationIndex] = useState(0);
-  const [locationLoading, setLocationLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
   const intervalRef = useRef(null);
   const animKeyRef = useRef(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
