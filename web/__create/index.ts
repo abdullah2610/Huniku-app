@@ -1,14 +1,12 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import nodeConsole from 'node:console';
 
-// Catch all uncaught errors and print full stack trace to stderr
+// Catch all uncaught errors — log full stack but DON'T exit (serverless can't recover from exit)
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT:', err instanceof Error ? err.stack : String(err));
-  process.exit(1);
 });
 process.on('unhandledRejection', (reason) => {
   console.error('UNHANDLED REJECTION:', reason instanceof Error ? reason.stack : String(reason));
-  process.exit(1);
 });
 
 import { skipCSRFCheck } from '@auth/core';
