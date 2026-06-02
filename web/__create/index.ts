@@ -1,5 +1,16 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import nodeConsole from 'node:console';
+
+// Catch all uncaught errors and print full stack trace to stderr
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT:', err instanceof Error ? err.stack : String(err));
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason instanceof Error ? reason.stack : String(reason));
+  process.exit(1);
+});
+
 import { skipCSRFCheck } from '@auth/core';
 import Credentials from '@auth/core/providers/credentials';
 import { authHandler, initAuthConfig } from '@hono/auth-js';
@@ -296,7 +307,23 @@ app.use('/api/auth/*', async (c, next) => {
 });
 app.route(API_BASENAME, api);
 
-export default await createHonoServer({
-  app,
-  defaultLogger: false,
+// Log what env vars are available at startup (values redacted)
+console.error('STARTUP ENV CHECK:', {
+  hasDatabaseUrl: !!process.env.DATABASE_URL,
+  hasAuthSecret: !!process.env.AUTH_SECRET,
+  nodeEnv: process.env.NODE_ENV || 'unset',
 });
+
+let handler;
+try {
+  handler = await createHonoServer({
+    app,
+    defaultLogger: false,
+  });
+  console.error('STARTUP: createHonoServer succeeded');
+} catch (err) {
+  console.error('STARTUP CRASH:', err instanceof Error ? err.stack : String(err));
+  throw err;
+}
+
+export default handler;
