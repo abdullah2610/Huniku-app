@@ -219,6 +219,7 @@ export default function SearchPage() {
                           }
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           alt={prop.title}
+                          loading="lazy"
                         />
                         <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow">
                           {MODE_LABEL[prop.listing_mode] || prop.listing_mode}
@@ -279,33 +280,41 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Map panel */}
-        <div
-          className={`flex-1 h-full transition-all ${view === "map" ? "block" : "hidden lg:block lg:w-1/2 border-l border-gray-100"}`}
-        >
-          <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
-            <Map
-              defaultCenter={{ lat: -6.2, lng: 106.816666 }}
-              defaultZoom={12}
-              gestureHandling={"greedy"}
-              disableDefaultUI={false}
-              className="w-full h-full"
-            >
-              {properties.map((prop) =>
-                prop.latitude && prop.longitude ? (
-                  <Marker
-                    key={prop.id}
-                    position={{
-                      lat: Number(prop.latitude),
-                      lng: Number(prop.longitude),
-                    }}
-                    title={prop.title}
-                  />
-                ) : null,
-              )}
-            </Map>
-          </APIProvider>
-        </div>
+        {/* Map panel — only render if API key is available */}
+        {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+          <div
+            className={`flex-1 h-full transition-all ${view === "map" ? "block" : "hidden lg:block lg:w-1/2 border-l border-gray-100"}`}
+          >
+            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
+              <Map
+                defaultCenter={{ lat: -6.2, lng: 106.816666 }}
+                defaultZoom={12}
+                gestureHandling={"greedy"}
+                disableDefaultUI={false}
+                className="w-full h-full"
+              >
+                {properties.map((prop) =>
+                  prop.latitude && prop.longitude ? (
+                    <Marker
+                      key={prop.id}
+                      position={{
+                        lat: Number(prop.latitude),
+                        lng: Number(prop.longitude),
+                      }}
+                      title={prop.title}
+                    />
+                  ) : null,
+                )}
+              </Map>
+            </APIProvider>
+          </div>
+        ) : (
+          view === "grid" ? null : (
+            <div className="flex-1 h-full flex items-center justify-center bg-gray-100">
+              <p className="text-gray-400 font-medium text-sm">Peta tidak tersedia</p>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

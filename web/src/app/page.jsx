@@ -296,12 +296,10 @@ export default function HomePage() {
                   >
                     <div className="relative h-72">
                       <img
-                        src={
-                          prop.images?.[0] ||
-                          "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800"
-                        }
+                        src={prop.images?.[0] || "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800"}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         alt={prop.title}
+                        loading="lazy"
                       />
                       <div className="absolute top-6 left-6 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-black tracking-widest">
                         {prop.listing_mode === "sale" ? "DIJUAL" : "DISEWA"}

@@ -165,7 +165,7 @@ export default function Navbar() {
               aria-label={link.label}
             >
               <link.icon size={20} strokeWidth={isActive(link.href) ? 2.5 : 2} />
-              <span className="text-[10px] font-bold">{link.label}</span>
+              <span className="text-[11px] font-bold">{link.label}</span>
             </button>
           ))}
           <button
@@ -176,7 +176,7 @@ export default function Navbar() {
             aria-label="Akun"
           >
             <User size={20} strokeWidth={isActive("/account") ? 2.5 : 2} />
-            <span className="text-[10px] font-bold">Akun</span>
+            <span className="text-[11px] font-bold">Akun</span>
           </button>
         </div>
       </div>

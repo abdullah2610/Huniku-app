@@ -272,26 +272,33 @@ export default function PropertyDetailPage({ params }) {
                 Lokasi Properti
               </h2>
               <div className="h-[400px] rounded-[40px] overflow-hidden border border-gray-100 shadow-sm">
-                <APIProvider
-                  apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-                >
-                  <Map
-                    defaultCenter={{
-                      lat: Number(property.latitude),
-                      lng: Number(property.longitude),
-                    }}
-                    defaultZoom={15}
-                    gestureHandling={"greedy"}
-                    disableDefaultUI={false}
+                {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+                  <APIProvider
+                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
                   >
-                    <Marker
-                      position={{
+                    <Map
+                      defaultCenter={{
                         lat: Number(property.latitude),
                         lng: Number(property.longitude),
                       }}
-                    />
-                  </Map>
-                </APIProvider>
+                      defaultZoom={15}
+                      gestureHandling={"greedy"}
+                      disableDefaultUI={false}
+                      className="w-full h-full"
+                    >
+                      <Marker
+                        position={{
+                          lat: Number(property.latitude),
+                          lng: Number(property.longitude),
+                        }}
+                      />
+                    </Map>
+                  </APIProvider>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <p className="text-gray-400 font-medium">Peta tidak tersedia</p>
+                  </div>
+                )}
               </div>
             </div>
 

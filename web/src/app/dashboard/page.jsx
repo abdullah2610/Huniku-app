@@ -137,7 +137,7 @@ export default function OwnerDashboard() {
       setShowUpgradeModal(true);
       return;
     }
-    navigate("/dashboard/owner");
+    navigate("/dashboard/owner/new");
   };
 
   if (!user) {
@@ -145,13 +145,13 @@ export default function OwnerDashboard() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-black text-gray-900 mb-4">
-            Login Required
+            Akses Diperlukan
           </h2>
           <button
             onClick={() => navigate('/account/signin')}
             className="text-blue-600 font-bold hover:underline"
           >
-            Sign in to continue
+            Masuk untuk melanjutkan
           </button>
         </div>
       </div>
@@ -280,8 +280,8 @@ export default function OwnerDashboard() {
               color: "bg-green-50 text-green-600",
             },
             {
-              label: "Performance",
-              value: "↑ 24%",
+              label: "Iklan Aktif",
+              value: subscription?.current_listings || 0,
               icon: TrendingUp,
               color: "bg-purple-50 text-purple-600",
             },
@@ -357,6 +357,7 @@ export default function OwnerDashboard() {
                       }
                       alt={prop.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
                     />
                     <div
                       className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold ${prop.is_active ? "bg-green-500 text-white" : "bg-gray-500 text-white"}`}
