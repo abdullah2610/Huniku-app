@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import useUser from "@/utils/useUser";
 
 export default function OnboardingPage() {
+  const navigate = useNavigate();
   const { data: user, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +24,7 @@ export default function OnboardingPage() {
         if (res.ok) {
           localStorage.removeItem("pendingRole");
           localStorage.removeItem("pendingName");
-          window.location.href = role === "owner" ? "/dashboard/owner" : "/";
+          navigate(role === "owner" ? "/dashboard/owner" : "/");
         }
       } catch (err) {
         console.error("Onboarding failed", err);
@@ -32,7 +34,7 @@ export default function OnboardingPage() {
     };
 
     completeOnboarding();
-  }, [user, userLoading]);
+  }, [user, userLoading, navigate]);
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-white">

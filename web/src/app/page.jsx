@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import {
   Search,
   MapPin,
@@ -11,10 +12,10 @@ import {
   ChevronRight,
   TrendingUp,
   Navigation,
-  ShieldCheck,
-  Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const PROPERTY_TYPES = [
   { id: "house", label: "Rumah", icon: Home },
@@ -26,12 +27,14 @@ const PROPERTY_TYPES = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [locationParts, setLocationParts] = useState([]);
   const [locationIndex, setLocationIndex] = useState(0);
   const [locationLoading, setLocationLoading] = useState(true);
   const intervalRef = useRef(null);
   const animKeyRef = useRef(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Geolocation + reverse geocode via Nominatim (no API key needed)
   useEffect(() => {
@@ -97,6 +100,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      {/* Navbar */}
+      <Navbar />
+
       {/* Animation styles */}
       <style jsx global>{`
         @keyframes locFadeUp {
@@ -119,36 +125,37 @@ export default function HomePage() {
         }
       `}</style>
 
-      <section className="relative h-[650px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[550px] md:h-[650px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10" />
         <img
           src="https://images.unsplash.com/photo-1600585154340-be6199f74039?auto=format&fit=crop&q=80&w=2000"
           className="absolute inset-0 w-full h-full object-cover"
           alt="Modern House"
+          loading="eager"
         />
 
-        <div className="relative z-20 text-center text-white px-4 max-w-5xl mx-auto">
+        <div className="relative z-20 text-center text-white px-4 max-w-5xl mx-auto w-full">
           {/* Hero title with animated location */}
-          <div className="mb-8">
-            <h1 className="text-5xl md:text-7xl font-black leading-[1.1] mb-2">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black leading-[1.1] mb-2">
               Temukan Properti <span className="text-blue-400">Impianmu</span>
             </h1>
-            <div className="flex items-center justify-center gap-3 mt-2">
-              <span className="text-5xl md:text-7xl font-black text-white leading-[1.1]">
+            <div className="flex items-center justify-center gap-2 md:gap-3 mt-2">
+              <span className="text-3xl sm:text-4xl md:text-7xl font-black text-white leading-[1.1]">
                 di
               </span>
               <div
                 className="relative overflow-hidden"
-                style={{ minWidth: 200 }}
+                style={{ minWidth: 120 }}
               >
                 {locationLoading ? (
-                  <span className="text-5xl md:text-7xl font-black text-yellow-400 leading-[1.1] loc-loading inline-block">
+                  <span className="text-3xl sm:text-4xl md:text-7xl font-black text-yellow-400 leading-[1.1] loc-loading inline-block">
                     ...
                   </span>
                 ) : (
                   <span
                     key={`${displayLocation}-${animKeyRef.current}`}
-                    className="text-5xl md:text-7xl font-black text-yellow-400 leading-[1.1] loc-text-in inline-block whitespace-nowrap"
+                    className="text-3xl sm:text-4xl md:text-7xl font-black text-yellow-400 leading-[1.1] loc-text-in inline-block whitespace-nowrap"
                   >
                     {displayLocation}
                   </span>
@@ -206,13 +213,12 @@ export default function HomePage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) =>
-                  e.key === "Enter" &&
-                  (window.location.href = `/search?q=${search}`)
+                  e.key === "Enter" && navigate(`/search?q=${search}`)
                 }
               />
             </div>
             <button
-              onClick={() => (window.location.href = `/search?q=${search}`)}
+              onClick={() => navigate(`/search?q=${search}`)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-black text-lg transition-all flex items-center justify-center shadow-lg shadow-blue-600/30"
             >
               <Search size={22} className="mr-2" />
@@ -234,10 +240,10 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {PROPERTY_TYPES.map((type) => (
-            <a
+            <button
               key={type.id}
-              href={`/search?type=${type.id}`}
-              className="flex flex-col items-center p-8 rounded-[40px] bg-gray-50 border border-transparent hover:border-blue-500 hover:bg-white hover:shadow-2xl hover:shadow-blue-100 transition-all group"
+              onClick={() => navigate(`/search?type=${type.id}`)}
+              className="flex flex-col items-center p-8 rounded-[40px] bg-gray-50 border border-transparent hover:border-blue-500 hover:bg-white hover:shadow-2xl hover:shadow-blue-100 transition-all group w-full text-left"
             >
               <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-blue-600 transition-colors">
                 <type.icon
@@ -248,7 +254,7 @@ export default function HomePage() {
               <span className="font-bold text-gray-900 text-lg">
                 {type.label}
               </span>
-            </a>
+            </button>
           ))}
         </div>
       </section>
@@ -264,12 +270,12 @@ export default function HomePage() {
                 Iklan pilihan yang sedang tren hari ini
               </p>
             </div>
-            <a
-              href="/search"
+            <button
+              onClick={() => navigate("/search")}
               className="bg-white px-6 py-3 rounded-full text-blue-600 font-bold border border-gray-200 hover:border-blue-600 transition-all flex items-center"
             >
               Lihat Semua <ChevronRight size={20} className="ml-1" />
-            </a>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -283,10 +289,10 @@ export default function HomePage() {
                     />
                   ))
               : properties.map((prop) => (
-                  <a
+                  <button
                     key={prop.id}
-                    href={`/property/${prop.id}`}
-                    className="bg-white rounded-[40px] overflow-hidden shadow-sm hover:shadow-2xl transition-all group border border-gray-100 flex flex-col h-full"
+                    onClick={() => navigate(`/property/${prop.id}`)}
+                    className="bg-white rounded-[40px] overflow-hidden shadow-sm hover:shadow-2xl transition-all group border border-gray-100 flex flex-col h-full block w-full text-left"
                   >
                     <div className="relative h-72">
                       <img
@@ -338,7 +344,7 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                  </a>
+                  </button>
                 ))}
           </div>
         </div>
@@ -355,18 +361,18 @@ export default function HomePage() {
               properti yang paling cocok untuk Anda.
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <a
-                href="/search"
+              <button
+                onClick={() => navigate('/search')}
                 className="bg-white text-blue-600 px-8 py-4 rounded-2xl font-black text-lg hover:shadow-xl transition-all"
               >
                 Mulai Cari
-              </a>
-              <a
-                href="/account/signup"
+              </button>
+              <button
+                onClick={() => navigate('/account/signup')}
                 className="bg-blue-500 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-blue-400 transition-all border border-blue-400"
               >
                 Daftar Akun
-              </a>
+              </button>
             </div>
           </div>
           <div className="relative z-10 w-full md:w-1/3 flex justify-center">
@@ -379,93 +385,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-gray-950 text-white py-24 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
-          <div className="col-span-1 md:col-span-2">
-            <h2 className="text-3xl font-black mb-8 tracking-tighter">
-              Huni<span className="text-blue-500">Ku</span>
-            </h2>
-            <p className="text-gray-400 text-lg mb-10 max-w-md leading-relaxed">
-              Platform ekosistem properti terbesar di Indonesia yang
-              menghubungkan pemilik dan pencari hunian dengan transparansi
-              penuh.
-            </p>
-          </div>
-          <div>
-            <h4 className="text-xl font-bold mb-8">Navigasi</h4>
-            <ul className="space-y-4 text-gray-400 text-lg">
-              <li>
-                <a
-                  href="/search"
-                  className="hover:text-blue-500 transition-colors"
-                >
-                  Cari Properti
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/search?mode=rent_monthly"
-                  className="hover:text-blue-500 transition-colors"
-                >
-                  Sewa Bulanan
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/search?mode=sale"
-                  className="hover:text-blue-500 transition-colors"
-                >
-                  Jual Beli
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/onboarding"
-                  className="hover:text-blue-500 transition-colors"
-                >
-                  Pasang Iklan
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-xl font-bold mb-8">Perusahaan</h4>
-            <ul className="space-y-4 text-gray-400 text-lg">
-              <li>
-                <a href="#" className="hover:text-blue-500 transition-colors">
-                  Tentang Kami
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-blue-500 transition-colors">
-                  Pusat Bantuan
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-blue-500 transition-colors">
-                  Kontak
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-blue-500 transition-colors">
-                  Blog
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto border-t border-white/5 mt-24 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-500 font-medium">
-          <p>&copy; 2026 HuniKu. All rights reserved.</p>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">
-              Syarat & Ketentuan
-            </a>
-            <a href="#" className="hover:text-white transition-colors">
-              Kebijakan Privasi
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

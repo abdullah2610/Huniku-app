@@ -1,5 +1,5 @@
-"use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router";
 import {
   Plus,
   Eye,
@@ -24,6 +24,7 @@ const TIER_COLORS = {
 };
 
 function UpgradeModal({ onClose, currentTier }) {
+  const navigate = useNavigate();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -90,12 +91,12 @@ function UpgradeModal({ onClose, currentTier }) {
             >
               Nanti Saja
             </button>
-            <a
-              href="/pricing"
+            <button
+              onClick={() => navigate('/pricing')}
               className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black transition shadow-lg text-center"
             >
               Lihat Paket
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -104,6 +105,7 @@ function UpgradeModal({ onClose, currentTier }) {
 }
 
 export default function OwnerDashboard() {
+  const navigate = useNavigate();
   const { data: user } = useUser();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -135,7 +137,7 @@ export default function OwnerDashboard() {
       setShowUpgradeModal(true);
       return;
     }
-    window.location.href = "/dashboard/owner";
+    navigate("/dashboard/owner");
   };
 
   if (!user) {
@@ -145,12 +147,12 @@ export default function OwnerDashboard() {
           <h2 className="text-2xl font-black text-gray-900 mb-4">
             Login Required
           </h2>
-          <a
-            href="/account/signin"
+          <button
+            onClick={() => navigate('/account/signin')}
             className="text-blue-600 font-bold hover:underline"
           >
             Sign in to continue
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -221,13 +223,13 @@ export default function OwnerDashboard() {
                 </div>
               </div>
               {subscription.subscription_tier !== "business" && (
-                <a
-                  href="/pricing"
+                <button
+                  onClick={() => navigate('/pricing')}
                   className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 px-6 py-3 rounded-xl font-bold text-sm transition flex items-center gap-2"
                 >
                   <ArrowUpRight size={16} />
                   Upgrade Paket
-                </a>
+                </button>
               )}
             </div>
           )}
@@ -253,9 +255,9 @@ export default function OwnerDashboard() {
                 subscription.subscription_tier !== "business" && (
                   <p className="text-xs text-yellow-700 mt-2 font-medium">
                     ⚠️ Hampir mencapai batas.{" "}
-                    <a href="/pricing" className="underline font-bold">
+                    <button onClick={() => navigate('/pricing')} className="underline font-bold">
                       Upgrade sekarang
-                    </a>
+                    </button>
                   </p>
                 )}
             </div>
@@ -310,13 +312,13 @@ export default function OwnerDashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-black text-gray-900">Iklan Saya</h2>
             {subscription?.has_analytics && (
-              <a
-                href="/dashboard/analytics"
+              <button
+                onClick={() => navigate('/dashboard/analytics')}
                 className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"
               >
                 <BarChart3 size={16} />
                 Lihat Analytics
-              </a>
+              </button>
             )}
           </div>
 
@@ -342,10 +344,10 @@ export default function OwnerDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myProperties.map((prop) => (
-                <a
+                <button
                   key={prop.id}
-                  href={`/property/${prop.id}`}
-                  className="group bg-gray-50 rounded-[24px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all"
+                  onClick={() => navigate(`/property/${prop.id}`)}
+                  className="group bg-gray-50 rounded-[24px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all block w-full text-left"
                 >
                   <div className="relative h-48">
                     <img
@@ -390,7 +392,7 @@ export default function OwnerDashboard() {
                       </div>
                     </div>
                   </div>
-                </a>
+                </button>
               ))}
             </div>
           )}

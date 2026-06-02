@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   Search,
   MapPin,
@@ -47,12 +48,10 @@ const TYPE_MAP = {
 };
 
 export default function SearchPage() {
-  const queryParams = new URLSearchParams(
-    typeof window !== "undefined" ? window.location.search : "",
-  );
-  // type from URL is already the DB enum value (e.g. "house")
-  const typeParam = queryParams.get("type") || "";
-  const query = queryParams.get("q") || "";
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get("type") || "";
+  const query = searchParams.get("q") || "";
 
   const [view, setView] = useState("grid");
   const [search, setSearch] = useState(query);
@@ -78,12 +77,12 @@ export default function SearchPage() {
       {/* Top bar */}
       <div className="bg-white border-b p-4 md:p-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
-          <a
-            href="/"
+          <button
+            onClick={() => navigate('/')}
             className="hidden md:flex items-center font-black text-2xl tracking-tighter shrink-0"
           >
             Huni<span className="text-blue-600">Ku</span>
-          </a>
+          </button>
 
           {/* Search input */}
           <div className="flex-1 w-full relative">
@@ -103,7 +102,7 @@ export default function SearchPage() {
                   const params = new URLSearchParams();
                   if (typeParam) params.append("type", typeParam);
                   if (search) params.append("q", search);
-                  window.location.href = `/search?${params.toString()}`;
+                  navigate(`/search?${params.toString()}`);
                 }
               }}
             />
@@ -118,7 +117,7 @@ export default function SearchPage() {
                   const params = new URLSearchParams();
                   if (cat.value) params.append("type", cat.value);
                   if (search) params.append("q", search);
-                  window.location.href = `/search?${params.toString()}`;
+                  navigate(`/search?${params.toString()}`);
                 }}
                 className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full border text-sm font-bold transition-all whitespace-nowrap shrink-0 ${
                   cat.value === typeParam
@@ -186,7 +185,7 @@ export default function SearchPage() {
                   Coba ubah filter atau kata kunci pencarian Anda
                 </p>
                 <button
-                  onClick={() => (window.location.href = "/search")}
+                  onClick={() => navigate("/search")}
                   className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
                 >
                   Reset Filter
@@ -207,10 +206,10 @@ export default function SearchPage() {
                       />
                     ))
                 : properties.map((prop) => (
-                    <a
+                    <button
                       key={prop.id}
-                      href={`/property/${prop.id}`}
-                      className="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all group border border-gray-100 flex flex-col h-full"
+                      onClick={() => navigate(`/property/${prop.id}`)}
+                      className="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all group border border-gray-100 flex flex-col h-full block w-full text-left"
                     >
                       <div className="relative h-56">
                         <img
@@ -274,7 +273,7 @@ export default function SearchPage() {
                           )}
                         </div>
                       </div>
-                    </a>
+                    </button>
                   ))}
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import {
   MapPin,
   Bed,
@@ -82,7 +83,9 @@ function MortgageCalculator({ price }) {
 }
 
 export default function PropertyDetailPage({ params }) {
-  const { id } = params;
+  const navigate = useNavigate();
+  const routeParams = useParams();
+  const id = params?.id || routeParams.id;
   const [activeImage, setActiveImage] = useState(0);
 
   const { data: property, isLoading } = useQuery({
@@ -111,13 +114,14 @@ export default function PropertyDetailPage({ params }) {
   return (
     <div className="min-h-screen bg-white font-sans pb-24">
       {/* Navigation Header */}
-      <div className="bg-white border-b sticky top-0 z-50 px-4 md:px-8 h-20 flex items-center justify-between">
-        <a
-          href="/search"
+      <div className="bg-white border-b sticky top-0 z-50 px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
+        <button
+          onClick={() => navigate("/search")}
           className="flex items-center text-gray-600 font-bold hover:text-blue-600 transition-colors"
+          aria-label="Kembali ke pencarian"
         >
           <ChevronLeft size={24} className="mr-1" /> Kembali ke Pencarian
-        </a>
+        </button>
         <div className="flex gap-4">
           <button className="p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all text-gray-600">
             <Share2 size={22} />
@@ -159,8 +163,9 @@ export default function PropertyDetailPage({ params }) {
                   key={idx}
                   onClick={() => setActiveImage(idx)}
                   className={`relative w-32 aspect-[4/3] rounded-2xl overflow-hidden shrink-0 border-4 transition-all ${activeImage === idx ? "border-blue-600" : "border-transparent opacity-60 hover:opacity-100"}`}
+                  aria-label={`Gambar ${idx + 1} dari ${property.title}`}
                 >
-                  <img src={img} className="w-full h-full object-cover" />
+                  <img src={img} className="w-full h-full object-cover" alt={`${property.title} - foto ${idx + 1}`} />
                 </button>
               ))}
             </div>

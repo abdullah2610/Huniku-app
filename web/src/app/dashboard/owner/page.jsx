@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router";
 import {
   Camera,
   MapPin,
@@ -15,6 +16,7 @@ import useUpload from "@/utils/useUpload";
 import { toast } from "sonner";
 
 export default function OwnerDashboard() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     title: "",
@@ -46,7 +48,7 @@ export default function OwnerDashboard() {
     },
     onSuccess: () => {
       toast.success("Iklan berhasil diterbitkan!");
-      window.location.href = "/";
+      navigate("/");
     },
     onError: () => {
       toast.error("Terjadi kesalahan. Silakan coba lagi.");
@@ -387,10 +389,10 @@ export default function OwnerDashboard() {
             ) : (
               <button
                 onClick={() => createMutation.mutate(formData)}
-                disabled={createMutation.isLoading || uploading}
+                disabled={createMutation.isPending || uploading}
                 className="flex-[2] py-4 px-6 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
               >
-                {createMutation.isLoading
+                {createMutation.isPending
                   ? "Menerbitkan..."
                   : "Terbitkan Iklan"}
               </button>
