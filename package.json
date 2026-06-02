@@ -2,7 +2,7 @@
   "name": "huniku-app",
   "private": true,
   "scripts": {
-    "build": "cd web && bun install && bun run build",
+    "build": "cd web && npm install --legacy-peer-deps && npm run build",
     "start": "node web/build/server/index.js"
   }
 }
