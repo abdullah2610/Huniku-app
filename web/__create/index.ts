@@ -52,6 +52,9 @@ app.use('*', (c, next) => {
 app.use(contextStorage());
 
 app.onError((err, c) => {
+  console.error('APP ERROR:', err instanceof Error ? err.stack : String(err));
+  const serialized = serializeError(err);
+  console.error('Serialized:', JSON.stringify(serialized));
   if (c.req.method !== 'GET') {
     return c.json(
       {
