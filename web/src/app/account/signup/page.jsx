@@ -33,8 +33,10 @@ function MainComponent() {
     }
 
     try {
-      localStorage.setItem("pendingRole", role);
-      localStorage.setItem("pendingName", name);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pendingRole", role);
+        localStorage.setItem("pendingName", name);
+      }
 
       await signUpWithCredentials({
         email,

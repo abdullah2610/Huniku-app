@@ -4,7 +4,7 @@ export default function Footer() {
   const navigate = useNavigate();
 
   return (
-    <footer className="bg-gray-950 text-white py-16 md:py-24 px-4">
+    <footer className="bg-gray-950 text-white py-16 md:py-24 px-4 pb-24 md:pb-24">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-16">
         <div className="sm:col-span-2 md:col-span-2">
           <button

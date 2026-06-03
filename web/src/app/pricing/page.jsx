@@ -294,9 +294,14 @@ export default function PricingPage() {
           {plans.map((plan) => {
             const Icon = TIER_ICONS[plan.id];
             const isCurrentPlan = status?.subscription_tier === plan.id;
-            const features = Array.isArray(plan.features)
-              ? plan.features
-              : JSON.parse(plan.features || "[]");
+            const features = (() => {
+              try {
+                const raw = plan.features;
+                return Array.isArray(raw) ? raw : JSON.parse(raw || "[]");
+              } catch {
+                return [];
+              }
+            })();
 
             return (
               <div
@@ -405,7 +410,7 @@ export default function PricingPage() {
               Chat via WhatsApp
             </a>
             <a
-              href="mailto:support@huniku.com"
+              href="mailto:halo@huniku.id"
               className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-4 rounded-2xl font-black transition"
             >
               Email Support

@@ -55,6 +55,8 @@ export default function SearchPage() {
 
   const [view, setView] = useState("grid");
   const [search, setSearch] = useState(query);
+  const [showFilters, setShowFilters] = useState(false);
+  const modeParam = searchParams.get("mode") || "";
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties", typeParam, query],
@@ -129,12 +131,58 @@ export default function SearchPage() {
                 {cat.label}
               </button>
             ))}
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-bold hover:border-blue-400 shrink-0 transition-all">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-bold shrink-0 transition-all ${
+                showFilters ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 bg-white text-gray-600 hover:border-blue-400"
+              }`}
+            >
               <SlidersHorizontal size={15} /> Filter
             </button>
           </div>
         </div>
       </div>
+
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="bg-white border-b px-4 md:px-6 py-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
+            <span className="text-sm font-bold text-gray-500 mr-2">Mode:</span>
+            {[
+              { label: "Semua", value: "" },
+              { label: "Dijual", value: "sale" },
+              { label: "Sewa Bulanan", value: "rent_monthly" },
+              { label: "Sewa Tahunan", value: "rent_yearly" },
+            ].map((m) => (
+              <button
+                key={m.value}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (typeParam) params.append("type", typeParam);
+                  if (m.value) params.append("mode", m.value);
+                  if (search) params.append("q", search);
+                  navigate(`/search?${params.toString()}`);
+                }}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                  m.value === modeParam
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+            <span className="mx-4 text-gray-300 hidden md:inline">|</span>
+            <span className="text-sm font-bold text-gray-500 mr-2 hidden md:inline">Urutkan:</span>
+            <button className="px-4 py-2 rounded-full text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all hidden md:inline">
+              Terbaru
+            </button>
+            <button className="px-4 py-2 rounded-full text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all hidden md:inline">
+              Harga Terendah
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Grid panel */}
@@ -234,7 +282,11 @@ export default function SearchPage() {
                             {prop.badge_label}
                           </div>
                         )}
-                        <button className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-md rounded-full text-gray-400 hover:text-red-500 transition-colors shadow-sm">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); /* TODO: implement wishlist */ }}
+                          className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-md rounded-full text-gray-400 hover:text-red-500 transition-colors shadow-sm"
+                          aria-label="Simpan ke favorit"
+                        >
                           <Star size={16} />
                         </button>
                       </div>
@@ -281,11 +333,11 @@ export default function SearchPage() {
         </div>
 
         {/* Map panel — only render if API key is available */}
-        {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+        {typeof window !== "undefined" && import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
           <div
             className={`flex-1 h-full transition-all ${view === "map" ? "block" : "hidden lg:block lg:w-1/2 border-l border-gray-100"}`}
           >
-            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
+            <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
               <Map
                 defaultCenter={{ lat: -6.2, lng: 106.816666 }}
                 defaultZoom={12}

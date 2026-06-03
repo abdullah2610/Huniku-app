@@ -59,13 +59,13 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-16">
           {/* Logo */}
-          <a
-            href="/"
-            onClick={(e) => { e.preventDefault(); navigate("/"); }}
+          <button
+            onClick={() => navigate("/")}
             className="flex items-center font-black text-2xl tracking-tighter shrink-0"
+            aria-label="HuniKu - Beranda"
           >
             Huni<span className="text-blue-600">Ku</span>
-          </a>
+          </button>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">

@@ -272,9 +272,9 @@ export default function PropertyDetailPage({ params }) {
                 Lokasi Properti
               </h2>
               <div className="h-[400px] rounded-[40px] overflow-hidden border border-gray-100 shadow-sm">
-                {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+                {typeof window !== "undefined" && import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                   <APIProvider
-                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+                    apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                   >
                     <Map
                       defaultCenter={{
