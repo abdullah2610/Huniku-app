@@ -51,9 +51,10 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 bg-white/80 backdrop-blur-xl transition-all ${
-          scrolled ? "shadow-sm border-b border-gray-100" : ""
+        className={`sticky top-0 z-50 backdrop-blur-xl transition-all ${
+          scrolled ? "shadow-sm border-b border-[#E2E9F2]" : ""
         }`}
+        style={{ backgroundColor: "rgba(238,242,248,0.9)" }}
         role="navigation"
         aria-label="Navigasi utama"
       >
@@ -62,9 +63,10 @@ export default function Navbar() {
           <button
             onClick={() => navigate("/")}
             className="flex items-center font-black text-2xl tracking-tighter shrink-0"
+            style={{ color: "#0E1F38" }}
             aria-label="HuniKu - Beranda"
           >
-            Huni<span className="text-blue-600">Ku</span>
+            Huni<span style={{ color: "#1C61D8" }}>Ku</span>
           </button>
 
           {/* Desktop nav */}
@@ -75,9 +77,10 @@ export default function Navbar() {
                 onClick={() => navigate(link.href)}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                   isActive(link.href)
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "text-[#1C61D8]"
+                    : "text-[#46586F] hover:text-[#0E1F38]"
                 }`}
+                style={isActive(link.href) ? { backgroundColor: "#E7EFFC" } : {}}
                 aria-label={link.label}
               >
                 {link.label}
@@ -89,14 +92,16 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => navigate("/account/signin")}
-              className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-sm font-bold transition-colors"
+              style={{ color: "#46586F" }}
               aria-label="Masuk"
             >
               Masuk
             </button>
             <button
               onClick={() => navigate("/account/signup")}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl transition-all shadow-sm"
+              className="px-5 py-2.5 text-white text-sm font-black rounded-xl transition-opacity hover:opacity-90 shadow-sm"
+              style={{ backgroundColor: "#1C61D8" }}
               aria-label="Daftar"
             >
               Daftar
@@ -106,7 +111,8 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 -mr-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="md:hidden p-2 -mr-2 rounded-xl transition-colors"
+            style={{ color: "#0E1F38" }}
             aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
             aria-expanded={mobileOpen}
           >
@@ -124,26 +130,26 @@ export default function Navbar() {
                 key={link.href}
                 onClick={() => navigate(link.href)}
                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-bold transition-all ${
-                  isActive(link.href)
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-700 hover:bg-gray-50"
+                  isActive(link.href) ? "text-[#1C61D8]" : "text-[#0E1F38]"
                 }`}
+                style={isActive(link.href) ? { backgroundColor: "#E7EFFC" } : {}}
               >
                 <link.icon size={20} />
                 {link.label}
               </button>
             ))}
-            <hr className="my-4 border-gray-100" />
+            <hr className="my-4 border-[#E2E9F2]" />
             <button
               onClick={() => navigate("/account/signin")}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-bold text-gray-700 hover:bg-gray-50 transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-bold text-[#0E1F38] transition-all"
             >
               <LogIn size={20} />
               Masuk
             </button>
             <button
               onClick={() => navigate("/account/signup")}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all mt-2"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-base font-black text-white hover:opacity-90 transition-all mt-2"
+              style={{ backgroundColor: "#1C61D8" }}
             >
               <UserPlus size={20} />
               Daftar Akun
@@ -153,15 +159,15 @@ export default function Navbar() {
       )}
 
       {/* Mobile bottom navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100 safe-area-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t border-[#E2E9F2] safe-area-bottom"
+        style={{ backgroundColor: "rgba(238,242,248,0.95)" }}>
         <div className="flex items-center justify-around h-16">
           {NAV_LINKS.map((link) => (
             <button
               key={link.href}
               onClick={() => navigate(link.href)}
-              className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 flex-1 transition-all ${
-                isActive(link.href) ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
-              }`}
+              className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 flex-1 transition-all"
+              style={{ color: isActive(link.href) ? "#1C61D8" : "#7A8AA0" }}
               aria-label={link.label}
             >
               <link.icon size={20} strokeWidth={isActive(link.href) ? 2.5 : 2} />
@@ -170,9 +176,8 @@ export default function Navbar() {
           ))}
           <button
             onClick={() => navigate("/account/signin")}
-            className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 flex-1 transition-all ${
-              isActive("/account") ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
-            }`}
+            className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 flex-1 transition-all"
+            style={{ color: isActive("/account") ? "#1C61D8" : "#7A8AA0" }}
             aria-label="Akun"
           >
             <User size={20} strokeWidth={isActive("/account") ? 2.5 : 2} />
