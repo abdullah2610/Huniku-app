@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   Search,
@@ -16,6 +16,7 @@ import {
   Lock,
   Star,
   SlidersHorizontal,
+  Navigation,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -210,6 +211,61 @@ function PropertyCard({ property, onClick }) {
 export default function HomePage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [locationParts, setLocationParts] = useState(["Indonesia"]);
+  const [locationIndex, setLocationIndex] = useState(0);
+  const [locationLoading, setLocationLoading] = useState(true);
+  const intervalRef = useRef(null);
+  const animKeyRef = useRef(0);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationParts(["Indonesia"]);
+      setLocationLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=id`,
+            { headers: { "Accept-Language": "id" } },
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const city = addr.city || addr.town || addr.municipality || addr.county || "";
+          const province = addr.state || "";
+          const parts = [city, province].filter(Boolean);
+          if (parts.length > 0) {
+            setLocationParts(parts);
+            setSearch(parts[0]);
+          } else {
+            setLocationParts(["Indonesia"]);
+          }
+        } catch {
+          setLocationParts(["Indonesia"]);
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      () => {
+        setLocationParts(["Indonesia"]);
+        setLocationLoading(false);
+      },
+      { timeout: 8000 },
+    );
+  }, []);
+
+  useEffect(() => {
+    if (locationParts.length < 2) return;
+    intervalRef.current = setInterval(() => {
+      animKeyRef.current += 1;
+      setLocationIndex((i) => (i + 1) % locationParts.length);
+    }, 2500);
+    return () => clearInterval(intervalRef.current);
+  }, [locationParts]);
+
+  const displayLocation = locationParts[locationIndex] || "Indonesia";
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["featured-properties"],
@@ -225,6 +281,19 @@ export default function HomePage() {
       <Navbar />
 
       {/* ── Hero ── */}
+      <style>{`
+        @keyframes locFadeUp {
+          0% { opacity: 0; transform: translateY(14px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .loc-text-in { animation: locFadeUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+        @keyframes locationPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        .loc-loading { animation: locationPulse 1.2s ease-in-out infinite; }
+      `}</style>
+
       <section className="relative overflow-hidden mx-4 mt-4 rounded-3xl md:mx-8 md:mt-6 lg:mx-12">
         <div className="absolute inset-0">
           <img
@@ -241,32 +310,80 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 px-6 pt-10 pb-20 md:px-16 md:pt-16 md:pb-28">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-            style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
-            <Shield size={13} color="#fff" strokeWidth={2.2} />
-            <span className="text-white text-[12px] font-bold">100% iklan terverifikasi</span>
+        <div className="relative z-10 px-6 pt-10 pb-20 md:px-16 md:pt-16 md:pb-28 text-center md:text-left">
+          {/* Hero title */}
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight mb-2"
+              style={{ letterSpacing: "-0.5px" }}>
+              Temukan Properti <span style={{ color: "#facc15" }}>Impianmu</span>
+            </h1>
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+              <span className="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight">
+                di
+              </span>
+              <div className="relative overflow-hidden" style={{ minWidth: 120 }}>
+                {locationLoading ? (
+                  <span className="text-3xl sm:text-4xl md:text-6xl font-black leading-tight loc-loading inline-block"
+                    style={{ color: "#facc15" }}>
+                    ...
+                  </span>
+                ) : (
+                  <span
+                    key={`${displayLocation}-${animKeyRef.current}`}
+                    className="text-3xl sm:text-4xl md:text-6xl font-black leading-tight loc-text-in inline-block whitespace-nowrap"
+                    style={{ color: "#facc15" }}
+                  >
+                    {displayLocation}
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Location dots */}
+            {locationParts.length > 1 && (
+              <div className="flex justify-center md:justify-start gap-2 mt-4">
+                {locationParts.map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: i === locationIndex ? 20 : 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: i === locationIndex ? "#facc15" : "rgba(255,255,255,0.4)",
+                      transition: "all 0.4s ease",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-4"
-            style={{ letterSpacing: "-0.5px" }}>
-            Temukan hunian tepercaya<br />
-            <span style={{ color: "#1C61D8" }}>di seluruh Indonesia</span>
-          </h1>
-          <p className="text-white/80 text-base md:text-lg max-w-xl mb-10">
+          {/* Location detected badge */}
+          {!locationLoading && locationParts.length > 0 && locationParts[0] !== "Indonesia" && (
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/20"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+                <Navigation size={13} className="text-green-400" />
+                <span className="text-sm font-semibold text-white/90">
+                  Lokasi terdeteksi: {locationParts.join(", ")}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto md:mx-0 mb-8">
             Platform properti terpercaya untuk jual, beli, dan sewa rumah, apartemen, kos, dan ruang komersial.
           </p>
 
           {/* Search bar */}
-          <div className="bg-white/97 rounded-2xl p-3 flex items-center gap-3 max-w-2xl shadow-xl"
+          <div className="rounded-2xl p-3 flex items-center gap-3 max-w-2xl mx-auto md:mx-0 shadow-xl"
             style={{ backgroundColor: "rgba(255,255,255,0.97)" }}>
             <div className="flex-1 flex items-center gap-3 px-2">
               <Search size={20} style={{ color: "#1C61D8" }} strokeWidth={2.1} />
               <input
                 type="text"
                 placeholder="Cari kota, area, atau proyek…"
-                className="w-full outline-none text-[15px] font-medium text-[#0E1F38] bg-transparent placeholder:text-[#7A8AA0]"
+                className="w-full outline-none text-[15px] font-medium bg-transparent"
+                style={{ color: "#0E1F38" }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) =>
