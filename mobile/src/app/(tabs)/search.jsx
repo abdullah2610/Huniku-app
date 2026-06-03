@@ -1,453 +1,574 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
-  TextInput,
   ScrollView,
+  FlatList,
   ActivityIndicator,
-} from "react-native";
-import { Image } from "expo-image";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+  StyleSheet,
+  TextInput,
+} from 'react-native';
+import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  ChevronLeft,
   Search,
+  X,
+  SlidersHorizontal,
   MapPin,
-  Home,
-  Building2,
-  Store,
-  Bed,
-  LandPlot,
-  Warehouse,
-  Building,
-} from "lucide-react-native";
-import { useQuery } from "@tanstack/react-query";
+  Shield,
+  Map,
+  ArrowUpDown,
+} from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import {
+  T,
+  fmtPrice,
+  catLabel,
+  modeBadgeLabel,
+  modeSuffix,
+  isSale,
+  CATEGORIES,
+} from '../../theme';
 
-// DB enum value → display label + icon
-const CATEGORY_FILTERS = [
-  { label: "Semua", value: "", icon: Home },
-  { label: "Rumah", value: "house", icon: Home },
-  { label: "Apartemen", value: "apartment", icon: Building2 },
-  { label: "Kos", value: "boarding_house", icon: Bed },
-  { label: "Ruko", value: "shophouse", icon: Store },
-  { label: "Tanah", value: "land", icon: LandPlot },
-  { label: "Gudang", value: "warehouse", icon: Warehouse },
-  { label: "Komersial", value: "commercial", icon: Building },
+const MODE_CHIPS = [
+  { id: 'all', label: 'Semua' },
+  { id: 'sale', label: 'Dijual' },
+  { id: 'rent', label: 'Disewa' },
 ];
 
-const MODE_LABEL = {
-  sale: "Dijual",
-  rent_monthly: "Sewa/Bln",
-  rent_yearly: "Sewa/Thn",
-};
+const SORT_OPTIONS = ['Relevan', 'Termurah', 'Termahal'];
+
+function CompactCard({ property, onPress }) {
+  const [imgErr, setImgErr] = useState(false);
+  const sale = isSale(property.listing_mode);
+  const suffix = modeSuffix(property.listing_mode);
+  const imgUri =
+    !imgErr && property.images?.[0]
+      ? property.images[0]
+      : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=400';
+
+  return (
+    <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.9}>
+      <View style={s.cardImgWrap}>
+        <Image
+          source={{ uri: imgUri }}
+          style={s.cardImg}
+          contentFit="cover"
+          onError={() => setImgErr(true)}
+        />
+        <View style={[s.modeBadge, { backgroundColor: sale ? T.primary : '#0E9466' }]}>
+          <Text style={s.modeBadgeText}>{modeBadgeLabel(property.listing_mode)}</Text>
+        </View>
+      </View>
+      <View style={s.cardBody}>
+        <View style={s.cardTopRow}>
+          <Text style={s.cardPrice} numberOfLines={1}>
+            {fmtPrice(property.price)}
+            {suffix ? <Text style={s.cardPriceSuffix}>{suffix}</Text> : null}
+          </Text>
+          {property.verified !== false && (
+            <Shield size={15} color={T.verify} strokeWidth={2.2} />
+          )}
+        </View>
+        <Text style={s.cardTitle} numberOfLines={1}>{property.title}</Text>
+        <View style={s.cardLocation}>
+          <MapPin size={13} color={T.muted} strokeWidth={1.9} />
+          <Text style={s.cardLocationText} numberOfLines={1}>{property.address}</Text>
+        </View>
+        <View style={s.cardSpecs}>
+          {property.bedrooms > 0 && (
+            <Text style={s.specText}>{property.bedrooms} KT</Text>
+          )}
+          {property.bathrooms > 0 && (
+            <Text style={s.specText}>{property.bathrooms} KM</Text>
+          )}
+          {(property.building_size || property.land_size) ? (
+            <Text style={s.specText}>{property.building_size || property.land_size} m²</Text>
+          ) : null}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
-  const [search, setSearch] = useState("");
-  const [activeType, setActiveType] = useState(""); // DB enum value
+  const [search, setSearch] = useState('');
+  const [mode, setMode] = useState('all');
+  const [activeType, setActiveType] = useState('');
+  const [sortIdx, setSortIdx] = useState(0);
 
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ["mobile-search", search, activeType],
+  const sort = SORT_OPTIONS[sortIdx];
+
+  const { data: rawProperties = [], isLoading } = useQuery({
+    queryKey: ['mobile-search', search, activeType],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (search) params.append("location", search);
-      if (activeType) params.append("type", activeType);
+      if (search) params.append('location', search);
+      if (activeType) params.append('type', activeType);
       const res = await fetch(`/api/properties?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error('Failed');
       return res.json();
     },
   });
 
-  return (
-    <View
-      style={{ flex: 1, backgroundColor: "#f8fafc", paddingTop: insets.top }}
-    >
-      {/* Header */}
-      <View
-        style={{
-          backgroundColor: "#ffffff",
-          paddingHorizontal: 20,
-          paddingTop: 16,
-          paddingBottom: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: "#f1f5f9",
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 24,
-            fontWeight: "900",
-            color: "#1e293b",
-            marginBottom: 12,
-          }}
-        >
-          Cari Properti
-        </Text>
+  let properties = rawProperties.filter((p) => {
+    if (mode === 'all') return true;
+    if (mode === 'sale') return p.listing_mode === 'sale';
+    return p.listing_mode === 'rent_monthly' || p.listing_mode === 'rent_yearly';
+  });
 
-        {/* Search bar */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "#f1f5f9",
-            borderRadius: 16,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-          }}
-        >
-          <Search size={18} color="#94a3b8" />
+  if (sort === 'Termurah') properties = [...properties].sort((a, b) => Number(a.price) - Number(b.price));
+  if (sort === 'Termahal') properties = [...properties].sort((a, b) => Number(b.price) - Number(a.price));
+
+  const nextSort = () => setSortIdx((sortIdx + 1) % SORT_OPTIONS.length);
+
+  return (
+    <View style={[s.root, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.backBtn} onPress={() => router.back()} activeOpacity={0.75}>
+          <ChevronLeft size={20} color={T.text} strokeWidth={2.2} />
+        </TouchableOpacity>
+        <View style={s.searchBar}>
+          <Search size={18} color={T.action} strokeWidth={2.1} />
           <TextInput
-            placeholder="Cari lokasi, kota, atau area..."
-            style={{ flex: 1, marginLeft: 10, fontSize: 14, color: "#1e293b" }}
-            placeholderTextColor="#94a3b8"
+            style={s.searchInput}
+            placeholder="Cari lokasi, kota, atau area…"
+            placeholderTextColor={T.muted}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
           />
-          {search !== "" && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Text
-                style={{ color: "#94a3b8", fontWeight: "700", fontSize: 14 }}
-              >
-                ✕
-              </Text>
+          {search !== '' && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={8}>
+              <X size={16} color={T.muted} strokeWidth={2} />
             </TouchableOpacity>
           )}
         </View>
+        <View style={s.filterBtn}>
+          <SlidersHorizontal size={18} color="#fff" strokeWidth={2} />
+        </View>
+      </View>
 
-        {/* Category filter chips — value is the DB enum */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ flexGrow: 0, marginTop: 12 }}
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {CATEGORY_FILTERS.map((cat) => {
-            const active = cat.value === activeType;
+      {/* Filter chips */}
+      <View style={s.chipRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipScroll}>
+          {MODE_CHIPS.map((chip) => {
+            const on = mode === chip.id;
             return (
               <TouchableOpacity
-                key={cat.value}
-                onPress={() => setActiveType(cat.value)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  backgroundColor: active ? "#2563eb" : "#ffffff",
-                  borderWidth: 1,
-                  borderColor: active ? "#2563eb" : "#e2e8f0",
-                  gap: 5,
-                }}
+                key={chip.id}
+                style={[s.chip, on && s.chipActive]}
+                onPress={() => setMode(chip.id)}
+                activeOpacity={0.8}
               >
-                <cat.icon size={13} color={active ? "#ffffff" : "#64748b"} />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "700",
-                    color: active ? "#ffffff" : "#64748b",
-                  }}
-                >
-                  {cat.label}
-                </Text>
+                <Text style={[s.chipText, on && s.chipTextActive]}>{chip.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={s.chipDivider} />
+          {[{ id: '', label: 'Semua Tipe' }, ...CATEGORIES].map((cat) => {
+            const on = activeType === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[s.chip, on && s.chipBlue]}
+                onPress={() => setActiveType(cat.id)}
+                activeOpacity={0.8}
+              >
+                <Text style={[s.chipText, on && s.chipTextBlue]}>{cat.label}</Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* Results count */}
-      <View style={{ paddingHorizontal: 20, paddingVertical: 10 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: "#94a3b8" }}>
-          {isLoading ? "Memuat..." : `${properties.length} properti ditemukan`}
-          {activeType
-            ? ` • ${CATEGORY_FILTERS.find((c) => c.value === activeType)?.label}`
-            : ""}
-          {search ? ` • "${search}"` : ""}
-        </Text>
-      </View>
-
-      {/* Property list */}
-      {isLoading ? (
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <ActivityIndicator size="large" color="#2563eb" />
-        </View>
-      ) : properties.length === 0 ? (
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: 40,
-          }}
-        >
-          <Home size={48} color="#e2e8f0" />
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "800",
-              color: "#94a3b8",
-              marginTop: 16,
-              textAlign: "center",
-            }}
-          >
-            Tidak ada properti ditemukan
-          </Text>
-          <Text
-            style={{
-              fontSize: 13,
-              color: "#cbd5e1",
-              marginTop: 8,
-              textAlign: "center",
-            }}
-          >
-            Coba ubah filter atau kata kunci pencarian
-          </Text>
-          <TouchableOpacity
-            onPress={() => {
-              setSearch("");
-              setActiveType("");
-            }}
-            style={{
-              marginTop: 20,
-              backgroundColor: "#2563eb",
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 16,
-            }}
-          >
-            <Text style={{ color: "#ffffff", fontWeight: "800", fontSize: 14 }}>
-              Reset Filter
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={properties}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 90,
-          }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={{
-                marginBottom: 16,
-                backgroundColor: "#ffffff",
-                borderRadius: 24,
-                overflow: "hidden",
-                borderWidth: 1,
-                borderColor: "#f1f5f9",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-              }}
-            >
-              {/* Image */}
-              <View style={{ position: "relative" }}>
-                <Image
-                  source={{
-                    uri:
-                      item.images?.[0] ||
-                      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
-                  }}
-                  style={{ width: "100%", height: 180 }}
-                  contentFit="cover"
-                />
-                {/* Mode badge */}
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 12,
-                    left: 12,
-                    backgroundColor: "#2563eb",
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 20,
-                  }}
-                >
-                  <Text
-                    style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}
-                  >
-                    {MODE_LABEL[item.listing_mode] || item.listing_mode}
-                  </Text>
+      {/* Scroll body */}
+      <FlatList
+        data={properties}
+        keyExtractor={(item, idx) => item.id + '-' + idx}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={s.listContent}
+        ListHeaderComponent={
+          <>
+            {/* Map banner */}
+            <TouchableOpacity style={s.mapBanner} activeOpacity={0.9}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200' }}
+                style={StyleSheet.absoluteFillObject}
+                contentFit="cover"
+              />
+              <View style={s.mapOverlay} />
+              <View style={s.mapBannerInner}>
+                <View>
+                  <Text style={s.mapTitle}>Lihat di peta</Text>
+                  <Text style={s.mapSub}>{properties.length} properti di area ini</Text>
                 </View>
-                {/* Subscription badge */}
-                {item.badge_label && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 12,
-                      right: 12,
-                      backgroundColor: item.badge_color || "#3b82f6",
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <Text
-                      style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}
-                    >
-                      {item.badge_label}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Info */}
-              <View style={{ padding: 16 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: "800",
-                    color: "#1e293b",
-                    marginBottom: 6,
-                  }}
-                  numberOfLines={2}
-                >
-                  {item.title}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <MapPin size={12} color="#94a3b8" />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: "#94a3b8",
-                      marginLeft: 4,
-                      flex: 1,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {item.address}
-                  </Text>
-                </View>
-
-                {/* Room info */}
-                {(item.bedrooms || item.bathrooms || item.building_size) && (
-                  <View
-                    style={{ flexDirection: "row", gap: 12, marginBottom: 10 }}
-                  >
-                    {item.bedrooms && (
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          color: "#64748b",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {item.bedrooms} KT
-                      </Text>
-                    )}
-                    {item.bathrooms && (
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          color: "#64748b",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {item.bathrooms} KM
-                      </Text>
-                    )}
-                    {item.building_size && (
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          color: "#64748b",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {item.building_size} m²
-                      </Text>
-                    )}
-                    {item.land_size && !item.building_size && (
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          color: "#64748b",
-                          fontWeight: "700",
-                        }}
-                      >
-                        {item.land_size} m²
-                      </Text>
-                    )}
-                  </View>
-                )}
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <View>
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: "900",
-                        color: "#2563eb",
-                      }}
-                    >
-                      Rp {Number(item.price).toLocaleString("id-ID")}
-                    </Text>
-                    {item.listing_mode === "rent_monthly" && (
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          color: "#94a3b8",
-                          fontWeight: "600",
-                        }}
-                      >
-                        per bulan
-                      </Text>
-                    )}
-                    {item.listing_mode === "rent_yearly" && (
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          color: "#94a3b8",
-                          fontWeight: "600",
-                        }}
-                      >
-                        per tahun
-                      </Text>
-                    )}
-                  </View>
-                  <View
-                    style={{
-                      backgroundColor: "#eff6ff",
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 12,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: "#2563eb",
-                        fontWeight: "800",
-                      }}
-                    >
-                      Lihat Detail →
-                    </Text>
-                  </View>
+                <View style={s.mapIconBtn}>
+                  <Map size={20} color={T.action} strokeWidth={2} />
                 </View>
               </View>
             </TouchableOpacity>
-          )}
-        />
-      )}
+
+            {/* Count + sort */}
+            <View style={s.countRow}>
+              <Text style={s.countText}>
+                <Text style={s.countBold}>{properties.length} properti</Text> ditemukan
+              </Text>
+              <TouchableOpacity style={s.sortBtn} onPress={nextSort} activeOpacity={0.8}>
+                <ArrowUpDown size={14} color={T.action} strokeWidth={2} />
+                <Text style={s.sortText}>{sort}</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            <View style={s.center}>
+              <ActivityIndicator size="large" color={T.action} />
+            </View>
+          ) : (
+            <View style={s.empty}>
+              <Text style={s.emptyTitle}>Tidak ada properti</Text>
+              <Text style={s.emptySub}>Coba ubah filter atau kata kunci</Text>
+              <TouchableOpacity
+                style={s.resetBtn}
+                onPress={() => { setSearch(''); setMode('all'); setActiveType(''); }}
+              >
+                <Text style={s.resetText}>Reset Filter</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        }
+        renderItem={({ item }) => (
+          <CompactCard
+            property={item}
+            onPress={() => router.push(`/property/${item.id}`)}
+          />
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+      />
     </View>
   );
 }
+
+const s = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: T.bg,
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: T.surface,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border,
+    shadowColor: '#10284010',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    zIndex: 5,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: T.surfaceAlt,
+    borderWidth: 1,
+    borderColor: T.border,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: T.text,
+    padding: 0,
+  },
+  filterBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: T.action,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+
+  // Chips
+  chipRow: {
+    backgroundColor: T.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border,
+  },
+  chipScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.surface,
+  },
+  chipActive: {
+    backgroundColor: T.primary,
+    borderColor: T.primary,
+  },
+  chipBlue: {
+    backgroundColor: T.actionSoft,
+    borderColor: T.action,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: T.sub,
+  },
+  chipTextActive: {
+    color: '#fff',
+  },
+  chipTextBlue: {
+    color: T.action,
+  },
+  chipDivider: {
+    width: 1,
+    backgroundColor: T.border,
+    marginHorizontal: 2,
+    alignSelf: 'stretch',
+  },
+
+  // List
+  listContent: {
+    paddingBottom: 100,
+  },
+
+  // Map banner
+  mapBanner: {
+    margin: 14,
+    marginBottom: 0,
+    height: 92,
+    borderRadius: T.radius,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: T.border,
+  },
+  mapOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(12,35,64,0.34)',
+  },
+  mapBannerInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  mapTitle: {
+    color: '#fff',
+    fontSize: 14.5,
+    fontWeight: '800',
+  },
+  mapSub: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 12,
+  },
+  mapIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  // Count + sort
+  countRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
+  countText: {
+    fontSize: 13.5,
+    color: T.sub,
+    fontWeight: '600',
+  },
+  countBold: {
+    color: T.text,
+    fontWeight: '800',
+  },
+  sortBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.surface,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  sortText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: T.text,
+  },
+
+  // Compact card
+  card: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: T.surface,
+    borderWidth: 1,
+    borderColor: T.border,
+    borderRadius: T.radius,
+    overflow: 'hidden',
+    padding: 10,
+    marginHorizontal: 16,
+    shadowColor: '#10284010',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardImgWrap: {
+    width: 104,
+    height: 104,
+    borderRadius: T.radiusSm,
+    overflow: 'hidden',
+    flexShrink: 0,
+    position: 'relative',
+  },
+  cardImg: {
+    width: '100%',
+    height: '100%',
+  },
+  modeBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 5,
+  },
+  modeBadgeText: {
+    color: '#fff',
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  cardBody: {
+    flex: 1,
+    minWidth: 0,
+    paddingTop: 2,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: T.primary,
+  },
+  cardPriceSuffix: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: T.muted,
+  },
+  cardTitle: {
+    marginTop: 4,
+    marginBottom: 3,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: T.text,
+  },
+  cardLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  cardLocationText: {
+    fontSize: 12,
+    color: T.sub,
+    flex: 1,
+  },
+  cardSpecs: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  specText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: T.sub,
+  },
+
+  // Empty / loading
+  center: {
+    paddingTop: 80,
+    alignItems: 'center',
+  },
+  empty: {
+    paddingTop: 60,
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: T.muted,
+    marginBottom: 8,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: T.border,
+    textAlign: 'center',
+  },
+  resetBtn: {
+    marginTop: 20,
+    backgroundColor: T.action,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 16,
+  },
+  resetText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+});
