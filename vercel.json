@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "buildCommand": "cd web && npm install --include=dev --legacy-peer-deps && npm run build",
+  "outputDirectory": "web/build/client",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ]
+}
