@@ -323,9 +323,9 @@ export default function HomePage() {
               </span>
               <div className="relative overflow-hidden" style={{ minWidth: 120 }}>
                 {locationLoading ? (
-                  <span className="text-3xl sm:text-4xl md:text-6xl font-black leading-tight loc-loading inline-block"
+                  <span className="text-3xl sm:text-4xl md:text-6xl font-black leading-tight inline-block"
                     style={{ color: "#facc15" }}>
-                    ...
+                    Indonesia
                   </span>
                 ) : (
                   <span
