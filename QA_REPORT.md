@@ -20,7 +20,7 @@ The HuniKu web app has a strong foundation with modern React Router + TanStack Q
 
 ---
 
-## Bugs Found & Fixed
+## Bugs Found & Fixed (double check)
 
 ### 🔴 CRITICAL
 
