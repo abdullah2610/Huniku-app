@@ -463,8 +463,7 @@ export default function AdminDashboard() {
     queryKey: ["admin-properties"],
     queryFn: async () => {
       const res = await fetch("/api/admin/properties");
-      if (res.status === 403) throw Object.assign(new Error("Forbidden"), { status: 403 });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw Object.assign(new Error("Forbidden"), { status: res.status });
       return res.json();
     },
     retry: false,
@@ -556,7 +555,7 @@ export default function AdminDashboard() {
     { id: "payments", label: "Transaksi", icon: CreditCard },
   ];
 
-  if (propertiesError?.status === 403) {
+  if (propertiesError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-16 rounded-[32px] border border-gray-100 shadow-sm text-center max-w-md">

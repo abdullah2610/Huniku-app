@@ -1,6 +1,10 @@
 import sql from "@/app/api/utils/sql";
 import { auth } from "@/auth";
 
+async function getSession() {
+  try { return await auth(); } catch { return null; }
+}
+
 async function requireAdmin(session) {
   if (!session?.user?.id) return false;
   const rows = await sql`SELECT role FROM profiles WHERE id = ${session.user.id} LIMIT 1`;
@@ -9,7 +13,7 @@ async function requireAdmin(session) {
 
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await getSession();
     if (!(await requireAdmin(session))) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }

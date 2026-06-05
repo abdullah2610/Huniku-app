@@ -1,6 +1,10 @@
 import sql from "@/app/api/utils/sql";
 import { auth } from "@/auth";
 
+async function getSession() {
+  try { return await auth(); } catch { return null; }
+}
+
 // One-time bootstrap: sets the authenticated user as admin.
 // Protected by ADMIN_SETUP_TOKEN env var — delete or unset after first use.
 export async function POST(request) {
@@ -14,7 +18,7 @@ export async function POST(request) {
     return Response.json({ error: "Invalid token" }, { status: 403 });
   }
 
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }

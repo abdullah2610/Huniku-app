@@ -1,6 +1,10 @@
 import sql from "@/app/api/utils/sql";
 import { auth } from "@/auth";
 
+async function getSession() {
+  try { return await auth(); } catch { return null; }
+}
+
 async function requireAdmin(session) {
   if (!session?.user?.id) return false;
   const rows = await sql`SELECT role FROM profiles WHERE id = ${session.user.id} LIMIT 1`;
@@ -8,12 +12,12 @@ async function requireAdmin(session) {
 }
 
 export async function PUT(request, { params }) {
-  const session = await auth();
+  const session = await getSession();
   if (!(await requireAdmin(session))) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   try {
     const body = await request.json();
     const {
@@ -70,12 +74,12 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  const session = await auth();
+  const session = await getSession();
   if (!(await requireAdmin(session))) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   try {
     const result = await sql`
       DELETE FROM properties WHERE id = ${id} RETURNING id
