@@ -459,13 +459,15 @@ export default function AdminDashboard() {
   };
 
   // Fetch all properties
-  const { data: properties = [], isLoading } = useQuery({
+  const { data: properties = [], isLoading, error: propertiesError } = useQuery({
     queryKey: ["admin-properties"],
     queryFn: async () => {
       const res = await fetch("/api/admin/properties");
+      if (res.status === 403) throw Object.assign(new Error("Forbidden"), { status: 403 });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
+    retry: false,
   });
 
   // Fetch real stats
@@ -476,6 +478,8 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
+    retry: false,
+    enabled: !propertiesError,
   });
 
   // Update mutation
@@ -551,6 +555,25 @@ export default function AdminDashboard() {
     { id: "users", label: "Manajemen User", icon: Users },
     { id: "payments", label: "Transaksi", icon: CreditCard },
   ];
+
+  if (propertiesError?.status === 403) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-16 rounded-[32px] border border-gray-100 shadow-sm text-center max-w-md">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert size={40} className="text-red-400" />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-3">Akses Ditolak</h2>
+          <p className="text-gray-400 font-medium mb-2">
+            Akun Anda belum memiliki hak admin.
+          </p>
+          <p className="text-xs text-gray-300">
+            Hubungi developer untuk mendaftarkan akun sebagai admin.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex font-sans">
