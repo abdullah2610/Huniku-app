@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useRef } from "react";
 import {
   Users,
   Home,
@@ -19,8 +21,11 @@ import {
   Warehouse,
   CheckCircle2,
   AlertCircle,
+  Upload,
+  ImagePlus,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import useUpload from "@/utils/useUpload";
 
 const TYPE_LABELS = {
   house: "Rumah",
@@ -100,10 +105,28 @@ function EditModal({ property, onClose, onSave }) {
     facilities: Array.isArray(property.facilities)
       ? property.facilities.join(", ")
       : "",
-    images: Array.isArray(property.images) ? property.images.join("\n") : "",
+    images: Array.isArray(property.images) ? [...property.images] : [],
   });
 
+  const [upload, { loading: uploading }] = useUpload();
+  const fileInputRef = useRef(null);
+
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleImageFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    for (const file of files) {
+      const { url, error } = await upload({ url: URL.createObjectURL(file) });
+      if (url) {
+        setForm((f) => ({ ...f, images: [...f.images, url] }));
+      }
+    }
+    e.target.value = "";
+  };
+
+  const removeImage = (index) => {
+    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -117,12 +140,6 @@ function EditModal({ property, onClose, onSave }) {
       facilities: form.facilities
         ? form.facilities
             .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [],
-      images: form.images
-        ? form.images
-            .split("\n")
             .map((s) => s.trim())
             .filter(Boolean)
         : [],
@@ -301,14 +318,55 @@ function EditModal({ property, onClose, onSave }) {
           </div>
 
           <div>
-            <label className={labelCls}>URL Foto (satu per baris)</label>
-            <textarea
-              className={inputCls}
-              rows={3}
-              value={form.images}
-              onChange={(e) => set("images", e.target.value)}
-              placeholder="https://..."
-            />
+            <label className={labelCls}>Foto Properti</label>
+            <div className="space-y-3">
+              {form.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {form.images.map((url, i) => (
+                    <div key={i} className="relative group aspect-video">
+                      <img
+                        src={url}
+                        alt={`foto ${i + 1}`}
+                        className="w-full h-full object-cover rounded-xl border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleImageFiles}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full border-2 border-dashed border-gray-200 rounded-xl py-4 flex items-center justify-center gap-2 text-sm font-bold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition disabled:opacity-50"
+              >
+                {uploading ? (
+                  <>
+                    <Upload size={16} className="animate-bounce" />
+                    Mengupload...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus size={16} />
+                    Tambah Foto
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -410,6 +468,16 @@ export default function AdminDashboard() {
     },
   });
 
+  // Fetch real stats
+  const { data: stats } = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/stats");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
@@ -423,6 +491,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       setEditingProperty(null);
       showToast("Properti berhasil diperbarui!", "success");
     },
@@ -440,6 +509,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       setDeletingProperty(null);
       showToast("Properti berhasil dihapus!", "success");
     },
@@ -453,19 +523,26 @@ export default function AdminDashboard() {
       TYPE_LABELS[p.type]?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const activeCount = properties.filter((p) => p.is_active).length;
+  const inactiveCount = properties.filter((p) => !p.is_active).length;
+
   const STATS = [
-    { label: "Total Properti", value: properties.length, trend: "+7 kategori" },
+    { label: "Total Properti", value: properties.length, trend: `${Object.keys(TYPE_LABELS).length} kategori` },
     {
       label: "Aktif",
-      value: properties.filter((p) => p.is_active).length,
+      value: activeCount,
       trend: "tampil di publik",
     },
     {
       label: "Nonaktif",
-      value: properties.filter((p) => !p.is_active).length,
+      value: inactiveCount,
       trend: "tersembunyi",
     },
-    { label: "Total User", value: "24,502", trend: "+12% bulan ini" },
+    {
+      label: "Total User",
+      value: stats ? Number(stats.users).toLocaleString("id-ID") : "—",
+      trend: stats ? `+${stats.properties?.new_this_month ?? 0} properti baru bulan ini` : "memuat...",
+    },
   ];
 
   const NAV = [
